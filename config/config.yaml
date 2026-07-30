@@ -1,0 +1,36 @@
+# Configurazione
+
+data:
+  image_dirs:
+    - "data/HAM10000_images_part_1"
+    - "data/HAM10000_images_part_2"
+  metadata_path: "data/HAM10000_metadata.tab"
+  features_dir: "data/extracted_features"
+  image_size: 224
+  test_size: 0.30
+  val_test_split: 0.50
+  seed: 42
+
+model:
+  name: "google/vit-base-patch16-224"
+  embedding_dim: 768
+
+train_classifier:
+  epochs: 10
+  batch_size: 32
+  learning_rate: 0.001
+  save_path: "./save_model_classifier/classifier.pt"
+
+test_classifier:
+  batch_size: 32
+  features_dir: "data/extracted_features"
+  classifier_path: "./save_model_classifier/classifier.pt"
+
+class_names:
+  - akiec
+  - bcc
+  - bkl
+  - df
+  - mel
+  - nv
+  - vasc
