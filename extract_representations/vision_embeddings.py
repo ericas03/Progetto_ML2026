@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-from transformers import ViTFeatureExtractor, ViTModel
+from transformers import ViTImageProcessor, ViTModel
 
 from data_classes.dataset import HAM10000Dataset
 
@@ -15,7 +15,7 @@ class VisionEmbeddings:
     '''
 
     def __init__(self, model_name='google/vit-base-patch16-224', device='cuda'):
-        self.feature_extractor = ViTFeatureExtractor.from_pretrained(model_name)
+        self.feature_extractor = ViTImageProcessor.from_pretrained(model_name)
         self.model = ViTModel.from_pretrained(model_name)
 
         self.device = device
