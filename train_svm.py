@@ -4,6 +4,11 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, confusion_matrix
+
 if __name__ == "__main__":
     # 1. Caricamento configurazioni dal file YAML
     config_path = "config/config.yaml"
@@ -44,3 +49,42 @@ if __name__ == "__main__":
     print(f"Standardizzazione completata!")
     print(f"Dimensioni set di addestramento: {X_train_scaled.shape}")
     print("Dati pronti per la modellazione.")
+
+    # 5. Addestramento SVM
+    print("\n--- ADDESTRAMENTO SVM ---")
+    print(f"Dimensioni feature utilizzate: {X_train_scaled.shape[1]}")
+
+    # Utilizzo dei migliori iperparametri
+    svm_full = SVC(
+        C=10,
+        kernel='rbf',
+        gamma='scale',
+        class_weight='balanced',
+        random_state=42
+    )
+
+    print("Addestramento della SVM in corso sulle 768 feature originali...")
+    svm_full.fit(X_train_scaled, y_train_full)
+    print("Addestramento completato!")
+
+    # 6. Valutazione sul Test Set
+    print("\nValutazione del modello sul Test Set...")
+    preds_full = svm_full.predict(X_test_scaled)
+
+    print("\n--- REPORT DI CLASSIFICAZIONE ---")
+    print(classification_report(y_test, preds_full, target_names=target_names))
+
+    # Visualizzazione grafica della Matrice di Confusione
+    cm_full = confusion_matrix(y_test, preds_full)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm_full, annot=True, fmt='d', cmap='Greens',
+                xticklabels=target_names,
+                yticklabels=target_names)
+    plt.xlabel('Predetto dal Modello')
+    plt.ylabel('Malattia Reale')
+    plt.title('Matrice di Confusione SVM')
+    plt.tight_layout()
+
+    # Salvataggio automatico dell'immagine nella cartella data
+    plt.savefig("data/confusion_matrix_svm_full.png")
+    plt.show()
