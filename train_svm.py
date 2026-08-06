@@ -88,3 +88,108 @@ if __name__ == "__main__":
     # Salvataggio automatico dell'immagine nella cartella data
     plt.savefig("data/confusion_matrix_svm_full.png")
     plt.show()
+
+    from sklearn.decomposition import PCA
+    from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+    from sklearn.model_selection import StratifiedKFold, GridSearchCV
+
+    # 7. SVM con PCA
+    print("SVM CON PCA")
+
+    # PCA a 2 dimensioni
+    pca_2d = PCA(n_components=2, random_state=42)
+    X_train_pca_2d = pca_2d.fit_transform(X_train_scaled)
+
+    # Dizionario colori per le 7 classi
+    colours = ['#e74c3c', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', '#2c3e50', '#d35400']
+
+    # Plot Scatter 2D PCA
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for label_idx, name in enumerate(target_names):
+        mask = y_train_full == label_idx
+        ax.scatter(X_train_pca_2d[mask, 0], X_train_pca_2d[mask, 1],
+                   s=35, alpha=0.7, color=colours[label_idx], label=name, edgecolors='white', linewidth=0.4)
+
+    ax.set_xlabel(f'PC1 ({pca_2d.explained_variance_ratio_[0]:.1%} varianza)')
+    ax.set_ylabel(f'PC2 ({pca_2d.explained_variance_ratio_[1]:.1%} varianza)')
+    ax.set_title('PCA 2D - Feature ViT')
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.savefig("data/pca_2d_scatter.png")
+    plt.show()
+
+    # Plot (Calcolato sulle componenti che spiegano il 90% della varianza)
+    pca_90 = PCA(n_components=0.90, random_state=42)
+    pca_90.fit(X_train_scaled)
+    cumulative = np.cumsum(pca_90.explained_variance_ratio_)
+    n_comp = np.arange(1, len(pca_90.explained_variance_ratio_) + 1)
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.bar(n_comp, pca_90.explained_variance_ratio_,
+           color='#5dade2', edgecolor='#2e86c1', label='Individuale', alpha=0.7)
+    ax.step(n_comp, cumulative, where='mid', color='#c0392b', linewidth=2, label='Cumulativa')
+    ax.axhline(y=0.90, color='gray', linestyle='--', linewidth=1.5, label='Soglia 90%')
+
+    ax.set_xlabel('Componenti Principali')
+    ax.set_ylabel('Rapporto Varianza Spiegata')
+    ax.set_title('Scree Plot (PCA 90% - ViT Features)')
+    ax.set_xticks(np.arange(0, len(n_comp) + 1, step=10))
+    ax.legend(fontsize=10)
+    plt.tight_layout()
+    plt.savefig("data/pca_scree_plot.ax.set_xticks(np.arange)
+
+    # 8. Addestramento PCA + SVM
+    print("ADDESTRAMENTO PCA + SVM")
+
+    X_train_pca = pca_90.transform(X_train_scaled)
+    X_test_pca = pca_90.transform(X_test_scaled)
+
+    print(f"Dimensioni feature originali: {X_train_scaled.shape[1]}")
+    print(f"Dimensioni feature ridotte (PCA 90%): {X_train_pca.shape[1]}")
+    print(f"Varianza totale spiegata: {np.sum(pca_90.explained_variance_ratio_) * 100:.2f}%")
+
+    print("\nConfigurazione della Grid Search ottimizzata per l'SVM")
+    param_grid = {
+        'C': [0.1, 1, 10],
+        'gamma': ['scale', 0.01, 0.1],
+        'kernel': ['rbf'],
+        'class_weight': ['balanced']
+    }
+
+    cv_stratified = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+
+    grid_search_pca = GridSearchCV(
+        estimator=SVC(random_state=42),
+        param_grid=param_grid,
+        scoring='f1_macro',
+        cv=cv_stratified,
+        n_jobs=-1,  # Sfrutta tutti i core per fare prima
+        verbose=1
+    )
+
+    print("Avvio della Grid Search")
+    grid_search_pca.fit(X_train_pca, y_train_full)
+
+    print("\nRISULTATI OTTENUTI DALL'OTTIMIZZAZIONE")
+    print(f"Miglior combinazione iperparametri: {grid_search_pca.best_params_}")
+    print(f"Miglior F1-Score ottenuto in CV:    {grid_search_pca.best_score_:.4f}")
+
+    best_svm_pca_model = grid_search_pca.best_estimator_
+
+    print("\nValutazione del modello finale")
+    preds_pca = best_svm_pca_model.predict(X_test_pca)
+
+    print("\nREPORT DI CLASSIFICAZIONE PCA + SVM")
+    print(classification_report(y_test, preds_pca, target_names=target_names))
+
+    cm_pca = confusion_matrix(y_test, preds_pca)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm_pca, annot=True, fmt='d', cmap='Blues',
+                xticklabels=target_names,
+                yticklabels=target_names)
+    plt.xlabel('Predetto dal Modello')
+    plt.ylabel('Malattia Reale')
+    plt.title('Matrice di Confusione SVM PCA')
+    plt.tight_layout()
+    plt.savefig("data/confusion_matrix_svm_pca.png")
+    plt.show()
