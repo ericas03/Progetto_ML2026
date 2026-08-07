@@ -193,3 +193,108 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("data/confusion_matrix_svm_pca.png")
     plt.show()
+
+    # 9. SVM con LDA
+    print("\n==========================================")
+    print(" 3. PIPELINE LDA + SVM")
+    print("==========================================")
+
+    lda_2d = LinearDiscriminantAnalysis(n_components=2)
+    X_train_lda_2d = lda_2d.fit_transform(X_train_scaled, y_train_full)
+
+    # Plot  2D LDA
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for label_idx, name in enumerate(target_names):
+        mask = y_train_full == label_idx
+    ax.scatter(X_train_lda_2d[mask, 0], X_train_lda_2d[mask, 1],
+               s=35, alpha=0.7, color=colours[label_idx], label=name, edgecolors='white', linewidth=0.4)
+
+    ax.set_xlabel('LD1')
+    ax.set_ylabel('LD2')
+    ax.set_title('LDA - Feature ViT')
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.savefig("data/lda_2d_scatter.png")
+    plt.show()
+
+    lda_full = LinearDiscriminantAnalysis()
+    X_train_lda = lda_full.fit_transform(X_train_scaled, y_train_full)
+    X_test_lda = lda_full.transform(X_test_scaled)
+
+    print(f"\nRIDUZIONE DELLA DIMENSIONALITÀ (LDA)")
+    print(f"Dimensioni feature originali: {X_train_scaled.shape[1]}")
+    print(f"Dimensioni feature ridotte (LDA): {X_train_lda.shape[1]}")
+
+    print("\nConfigurazione della Grid Search per SVM (dati LDA)")
+    grid_search_lda = GridSearchCV(
+        estimator=SVC(random_state=42),
+        param_grid=param_grid,
+        scoring='f1_macro',
+        cv=cv_stratified,
+        n_jobs=-1,
+        verbose=1
+    )
+
+    print("Avvio della Grid Search sui dati ridotti con LDA")
+    grid_search_lda.fit(X_train_lda, y_train_full)
+
+    print("\nRISULTATI OTTIMIZZAZIONE LDA + SVM")
+    print(f"Miglior combinazione iperparametri: {grid_search_lda.best_params_}")
+    print(f"Miglior F1-Score ottenuto in CV:    {grid_search_lda.best_score_:.4f}")
+
+    best_svm_lda_model = grid_search_lda.best_estimator_
+
+    print("\nValutazione del modello finale (LDA)")
+    preds_lda = best_svm_lda_model.predict(X_test_lda)
+
+    print("\nREPORT DI CLASSIFICAZIONE FINALE (LDA)")
+    print(classification_report(y_test, preds_lda, target_names=target_names))
+
+    cm_lda = confusion_matrix(y_test, preds_lda)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm_lda, annot=True, fmt='d', cmap='Oranges',
+                xticklabels=target_names,
+                yticklabels=target_names)
+    plt.xlabel('Predetto dal Modello')
+    plt.ylabel('Malattia Reale')
+    plt.title('Matrice di Confusione SVM (LDA)')
+    plt.tight_layout()
+    plt.savefig("data/confusion_matrix_svm_lda.png")
+    plt.show()
+
+    # 10. CONFRONTO FINALE METRICHE SVM
+    print("CONFRONTO FINALE METRICHE SVM")
+
+    # 1. Baseline (Tutte le 768 feature)
+    preds_base = svm_full.predict(X_test_scaled)
+    f1_baseline = f1_score(y_test, preds_base, average='macro')
+
+    # 2. PCA + SVM (197 feature circa)
+    f1_pca_val = f1_score(y_test, preds_pca, average='macro')
+
+    # 3. LDA + SVM (6 feature)
+    f1_lda_val = f1_score(y_test, preds_lda, average='macro')
+
+    # CREAZIONE DEL GRAFICO
+    modelli = ['SVM Base\n(768 feature)', 'SVM + PCA\n(PCA var. 90%)', 'SVM + LDA\n(6 feature)']
+    punteggi = [f1_baseline, f1_pca_val, f1_lda_val]
+    colori = ['#2c3e50', '#2980b9', '#e74c3c']
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    bars = ax.bar(modelli, punteggi, color=colori, width=0.5, edgecolor='black', alpha=0.85)
+
+    # Aggiungiamo i valori numerici sopra ogni barra
+    for bar in bars:
+        yval = bar.get_height()
+    ax.text(bar.get_x() + bar.get_width() / 2, yval + 0.01,
+            f'{yval:.4f}', ha='center', va='bottom', fontweight='bold')
+
+    # Formattazione estetica
+    ax.set_ylabel('F1-Score (Macro)', fontweight='bold')
+    ax.set_title('Confronto Prestazioni SVM (Test Set)', fontweight='bold', pad=15)
+    ax.set_ylim(0, 1.05)  # Mantiene l'asse Y da 0 a 1
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+    plt.tight_layout()
+    plt.savefig("data/svm_comparison_bar_chart.png")
+    plt.show()
