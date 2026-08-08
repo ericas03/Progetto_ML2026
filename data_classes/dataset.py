@@ -91,4 +91,4 @@ class HAM10000Dataset:
         print(f" - Validation set: {len(val_df)} immagini")
         print(f" - Test set: {len(test_df)} immagini")
 
-        return train_df, val_df, test_df
+        return train_df, val_df, test_df, label_encoder.classes_

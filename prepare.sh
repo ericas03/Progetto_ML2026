@@ -19,3 +19,7 @@ echo "Prima di eseguire l'estrazione delle feature, assicurati di aver posiziona
 echo "1.Le immagini della parte 1 in: data/HAM10000_images_part_1/"
 echo "2.Le immagini della parte 2 in: data/HAM10000_images_part_2/"
 echo "3. Il file metadati (HAM10000_metadata.tab) dentro la cartella: data/"
+
+# Messaggio finale
+echo "Dataset usato: ISIC Archive 2018"
+echo "Link originale: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T#"
