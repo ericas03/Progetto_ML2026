@@ -4,6 +4,9 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
+from PIL import Image
+from torch.utils.data import Dataset
+import torch
 
 class HAM10000Dataset:
     # Classe per la gestione e la preparazione del dataset HAM10000.
@@ -92,3 +95,29 @@ class HAM10000Dataset:
         print(f" - Test set: {len(test_df)} immagini")
 
         return train_df, val_df, test_df, label_encoder.classes_
+
+# Classe per il deep learning
+
+class HAM10000PyTorchDataset(Dataset):
+    # Prende in input un DataFrame (generato da HAM10000Dataset) e restituisce i tensori delle immagini.
+
+    def __init__(self, dataframe, transform=None):
+        self.dataframe = dataframe.reset_index(drop=True)
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataframe)
+
+    def __getitem__(self, idx):
+        img_path = self.dataframe.loc[idx, 'image_path']
+        label = self.dataframe.loc[idx, 'label']
+
+        image = Image.open(img_path).convert('RGB')
+
+        if self.transform:
+            image = self.transform(image)
+
+        return {
+            'image': image,
+            'label': torch.tensor(label, dtype=torch.long)
+        }
