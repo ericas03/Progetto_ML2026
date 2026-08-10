@@ -136,7 +136,8 @@ if __name__ == "__main__":
     ax.set_xticks(np.arange(0, len(n_comp) + 1, step=10))
     ax.legend(fontsize=10)
     plt.tight_layout()
-    plt.savefig("data/pca_scree_plot.ax.set_xticks(np.arange)
+    plt.savefig("data/pca_scree_plot.png")
+    plt.show()
 
     # 8. Addestramento PCA + SVM
     print("ADDESTRAMENTO PCA + SVM")
@@ -286,7 +287,7 @@ if __name__ == "__main__":
     # Aggiungiamo i valori numerici sopra ogni barra
     for bar in bars:
         yval = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width() / 2, yval + 0.01,
+    ax.text(bar.get_x() + bar.get_width() / 2, yval + 0.01,
             f'{yval:.4f}', ha='center', va='bottom', fontweight='bold')
 
     # Formattazione estetica
