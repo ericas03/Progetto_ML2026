@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.svm import SVC
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
 
 if __name__ == "__main__":
     # 1. Caricamento configurazioni dal file YAML
@@ -199,14 +199,14 @@ if __name__ == "__main__":
     print(" 3. PIPELINE LDA + SVM")
     print("==========================================")
 
-    lda_2d = LinearDiscriminantAnalysis(n_components=2)
+    lda_2d = LinearDiscriminantAnalysis(n_components=2, solver='eigen')
     X_train_lda_2d = lda_2d.fit_transform(X_train_scaled, y_train_full)
 
     # Plot  2D LDA
     fig, ax = plt.subplots(figsize=(8, 6))
     for label_idx, name in enumerate(target_names):
         mask = y_train_full == label_idx
-    ax.scatter(X_train_lda_2d[mask, 0], X_train_lda_2d[mask, 1],
+        ax.scatter(X_train_lda_2d[mask, 0], X_train_lda_2d[mask, 1],
                s=35, alpha=0.7, color=colours[label_idx], label=name, edgecolors='white', linewidth=0.4)
 
     ax.set_xlabel('LD1')
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     plt.savefig("data/lda_2d_scatter.png")
     plt.show()
 
-    lda_full = LinearDiscriminantAnalysis()
+    lda_full = LinearDiscriminantAnalysis(solver='eigen')
     X_train_lda = lda_full.fit_transform(X_train_scaled, y_train_full)
     X_test_lda = lda_full.transform(X_test_scaled)
 
@@ -231,7 +231,7 @@ if __name__ == "__main__":
         param_grid=param_grid,
         scoring='f1_macro',
         cv=cv_stratified,
-        n_jobs=-1,
+        n_jobs=1,
         verbose=1
     )
 
@@ -286,7 +286,7 @@ if __name__ == "__main__":
     # Aggiungiamo i valori numerici sopra ogni barra
     for bar in bars:
         yval = bar.get_height()
-    ax.text(bar.get_x() + bar.get_width() / 2, yval + 0.01,
+        ax.text(bar.get_x() + bar.get_width() / 2, yval + 0.01,
             f'{yval:.4f}', ha='center', va='bottom', fontweight='bold')
 
     # Formattazione estetica
