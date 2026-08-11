@@ -1,5 +1,6 @@
 # Configurazione
 
+# 1. Dati
 data:
   image_dirs:
     - "data/HAM10000_images_part_1"
@@ -11,10 +12,33 @@ data:
   val_test_split: 0.50
   seed: 42
 
+class_names:
+  - akiec
+  - bcc
+  - bkl
+  - df
+  - mel
+  - nv
+  - vasc
+
+# 2. Configurazione modelli (CNN & ViT)
 model:
-  name: "google/vit-base-patch16-224"
+  # Parametri richiesti per le Reti Neurali
+  name: "vgg16"               # vgg16 | vgg19 | resnet18 | simplecnn
+  pretrained: true            # true per VGG, false per ResNet18/SimpleCNN
+  num_classes: 7              # 7 classi per HAM10000
+
+  # Parametri preesistenti per il Vision Transformer
+  vit_name: "google/vit-base-patch16-224"
   embedding_dim: 768
 
+# 3. Parametri di addestramento Reti Neurali (CNN)
+training:
+  epochs: 10
+  batch_size: 32
+  lr: 0.0001
+
+# 4. Parametri di addestramento SVM
 train_classifier:
   epochs: 10
   batch_size: 32
@@ -25,12 +49,3 @@ test_classifier:
   batch_size: 32
   features_dir: "data/extracted_features"
   classifier_path: "./save_model_classifier/classifier.pt"
-
-class_names:
-  - akiec
-  - bcc
-  - bkl
-  - df
-  - mel
-  - nv
-  - vasc
