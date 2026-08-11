@@ -72,7 +72,7 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     features_dir = config['data']['features_dir']
-    model_name = config['model']['name']
+    model_name = config['model']['vit_name']
 
     # Creazione della cartella di output se non esiste
     os.makedirs(features_dir, exist_ok=True)
