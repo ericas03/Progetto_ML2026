@@ -83,7 +83,8 @@ if __name__ == "__main__":
 
     # 3. Ottenimento dei dataframe splittati senza Data Leakage
     data_module = HAM10000Dataset(config_path=config_path)
-    train_df, val_df, test_df = data_module.prepare_dataframes()
+    train_df, val_df, test_df, _ = data_module.prepare_dataframes()
+
 
     # 4. Inizializzazione modello
     print(f"\nCaricamento modello ViT: {model_name}")
