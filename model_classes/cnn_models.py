@@ -75,3 +75,85 @@ class BasicBlock(nn.Module):
         out += identity
         out = self.relu(out)
         return out
+
+
+class ResNet18Custom(nn.Module):
+    #Costruzione manuale della ResNet18 assemblando i BasicBlock.
+
+    def __init__(self, num_classes=7):
+        super().__init__()
+        self.in_channels = 64
+
+        # Strato iniziale
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        # I 4 "Layer" principali della ResNet18 (ognuno contiene 2 BasicBlocks)
+        self.layer1 = self._make_layer(64, num_blocks=2, stride=1)
+        self.layer2 = self._make_layer(128, num_blocks=2, stride=2)
+        self.layer3 = self._make_layer(256, num_blocks=2, stride=2)
+        self.layer4 = self._make_layer(512, num_blocks=2, stride=2)
+
+        # Classificatore finale
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(512 * BasicBlock.expansion, num_classes)
+
+    def _make_layer(self, out_channels, num_blocks, stride):
+        strides = [stride] + [1] * (num_blocks - 1)
+        layers = []
+        for s in strides:
+            layers.append(BasicBlock(self.in_channels, out_channels, s))
+            self.in_channels = out_channels * BasicBlock.expansion
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        # 1. Estrazione iniziale
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        # 2. Passaggio nei blocchi residui
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        # 3. Classificazione
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+
+        return x
+
+
+# 2. Funzione di inizializzazione
+
+def get_model(model_name: str, pretrained: bool = True, num_classes: int = 7):
+    #Istanzia la rete corretta in base alla scelta.
+    model_name = model_name.lower()
+
+    if model_name == "vgg16":
+        weights = models.VGG16_Weights.DEFAULT if pretrained else None
+        model = models.vgg16(weights=weights)
+        in_features = model.classifier[6].in_features
+        model.classifier[6] = nn.Linear(in_features, num_classes)
+
+    elif model_name == "vgg19":
+        weights = models.VGG19_Weights.DEFAULT if pretrained else None
+        model = models.vgg19(weights=weights)
+        in_features = model.classifier[6].in_features
+        model.classifier[6] = nn.Linear(in_features, num_classes)
+
+    elif model_name == "resnet18":
+        model = ResNet18Custom(num_classes=num_classes)
+
+    elif model_name == "simplecnn":
+        model = SimpleCNN(num_classes=num_classes)
+
+    else:
+        raise ValueError(f"Modello '{model_name}' non supportato.")
+
+    return model
