@@ -148,11 +148,9 @@ def get_model(model_name: str, pretrained: bool = True, num_classes: int = 7):
         model.classifier[6] = nn.Linear(in_features, num_classes)
 
     elif model_name == "resnet18":
-        # Utilizziamo la tua ResNet18 scritta a mano
         model = ResNet18Custom(num_classes=num_classes)
 
     elif model_name == "simplecnn":
-        # Utilizziamo la tua SimpleCNN scritta a mano
         model = SimpleCNN(num_classes=num_classes)
 
     else:
